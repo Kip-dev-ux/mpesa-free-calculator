@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>M-Pesa Free Calculator</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f4f4f9;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+        .calculator-card {
+            background: white;
+            padding: 20px;
+            border-radius: 12px;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+            max-width: 400px;
+            width: 100%;
+            margin-bottom: 20px;
+        }
+        h2 { color: #2e7d32; text-align: center; margin-top: 0; }
+        label { font-weight: bold; color: #333; }
+        input {
+            width: 100%;
+            padding: 12px;
+            margin: 10px 0 15px 0;
+            border: 1px solid #ccc;
+            border-radius: 6px;
+            box-sizing: border-box;
+            font-size: 16px;
+        }
+        button {
+            width: 100%;
+            background-color: #2e7d32;
+            color: white;
+            padding: 12px;
+            border: none;
+            border-radius: 6px;
+            font-size: 16px;
+            cursor: pointer;
+            font-weight: bold;
+        }
+        button:hover { background-color: #1b5e20; }
+        .result-box {
+            margin-top: 15px;
+            padding: 15px;
+            background-color: #e8f5e9;
+            border-radius: 6px;
+        }
+        .highlight { color: #2e7d32; font-size: 18px; }
+    </style>
+</head>
+<body>
+
+<!-- CARD 1: STANDARD CALCULATOR -->
+<div class="calculator-card">
+    <h2>M-Pesa Free Calculator</h2>
+    <label for="amount">Enter Amount to Send/Withdraw (Ksh):</label>
+    <input type="number" id="amount" placeholder="e.g. 5000">
+    <button onclick="calculateFees()">Calculate Costs</button>
+
+    <div class="result-box">
+        <p><strong>Transfer Fee:</strong> <span id="transfer-cost">0</span> Ksh</p>
+        <p><strong>Withdrawal Fee:</strong> <span id="withdraw-cost">0</span> Ksh</p>
+    </div>
+</div>
+
+<!-- CARD 2: OPTIMIZED WALLET CLEANER -->
+<div class="calculator-card">
+    <h2>Wallet Cleaner Optimizer</h2>
+    <label for="wallet-balance">Enter Your Total Wallet Balance (Ksh):</label>
+    <input type="number" id="wallet-balance" placeholder="e.g. 520">
+    <button onclick="optimizeWalletClear()">Find Max Cash Out</button>
+
+    <div class="result-box">
+        <p><strong>Withdraw Exactly:</strong> <span id="opt-cash" class="highlight">0</span> Ksh</p>
+        <p><strong>Agent Fee Charged:</strong> <span id="opt-fee">0</span> Ksh</p>
+        <p><strong>Leftover in Wallet:</strong> <span id="opt-leftover">0</span> Ksh</p>
+    </div>
+</div>
+
+<script>
+// Official withdrawal fee tier
+function getStandardWithdrawFee(cashAmount) {
+    if (cashAmount <= 0) return 0;
+    if (cashAmount >= 1 && cashAmount <= 100) return 10;
+    if (cashAmount >= 101 && cashAmount <= 500) return 27;
+    if (cashAmount >= 501 && cashAmount <= 1000) return 29; // Corrected to official 29 Ksh tariff!
+    return 34; 
+}
+
+// Standard Fee Calculator Logic
+function calculateFees() {
+    let amt = Number(document.getElementById("amount").value);
+    let transfer = 0;
+    
+    if (amt <= 0) transfer = 0;
+    else if (amt >= 1 && amt <= 100) transfer = 0;
+    else if (amt >= 101 && amt <= 500) transfer = 7;
+    else if (amt >= 501 && amt <= 1000) transfer = 13; // Corrected to official 13 Ksh tariff!
+    else transfer = 22;
+
+    document.getElementById("transfer-cost").innerText = transfer;
+    document.getElementById("withdraw-cost").innerText = getStandardWithdrawFee(amt);
+}
+
+// Optimization Logic
+function optimizeWalletClear() {
+    let balance = Number(document.getElementById("wallet-balance").value);
+    
+    if (balance <= 0) {
+        document.getElementById("opt-cash").innerText = 0;
+        document.getElementById("opt-fee").innerText = 0;
+        document.getElementById("opt-leftover").innerText = 0;
+        return;
+    }
+
+    let baseFee = getStandardWithdrawFee(balance - 27); 
+    let maxRawCash = balance - baseFee;
+
+    let optimizedCash = maxRawCash;
+    let finalFee = baseFee;
+
+    let lastDigit = maxRawCash % 10; 
+
+    if (lastDigit === 3 || lastDigit === 4) {
+        let testHigherCash = maxRawCash + (5 - lastDigit); 
+        let testFee = 25; 
+
+        if (testHigherCash + testFee <= balance) {
+            optimizedCash = testHigherCash;
+            finalFee = testFee;
+        } else {
+            optimizedCash = maxRawCash - lastDigit; 
+            finalFee = baseFee;
+        }
+    } else if (lastDigit === 1 || lastDigit === 2) {
+        optimizedCash = maxRawCash - lastDigit;
+        finalFee = baseFee;
+    }
+
+    let leftover = balance - (optimizedCash + finalFee);
+
+    document.getElementById("opt-cash").innerText = optimizedCash;
+    document.getElementById("opt-fee").innerText = finalFee;
+    document.getElementById("opt-leftover").innerText = leftover;
+}
+</script>
+
+</body>
+</html>
